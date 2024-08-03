@@ -10,7 +10,8 @@ import torch
 import config
 
 class VoiceAssistant:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.language =config.language
         self.engine = 'conq'
         self.translit: bool = False
@@ -34,7 +35,7 @@ class VoiceAssistant:
             with open(os.devnull, 'w') as devnull:
                 subprocess.call(['mplayer', 'output/multi_speaker_output.wav'], stdout=devnull, stderr=devnull)
 
-vass = VoiceAssistant()
+vass = VoiceAssistant("Сагара")
 
 if __name__ == '__main__':
 
