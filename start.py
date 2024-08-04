@@ -9,10 +9,21 @@ import random
 from routing import start_routing
 
 from assist import vass
-
+from vosk import Model
 #import time
 
 import config
+
+def recognize(audio,r):
+    if config.online_recognize:
+        text = r.recognize_google(audio, language=config.recognize_language)
+        print("Текст(online): " + text)
+    else:
+        text = r.recognize_vosk(audio, language=config.recognize_language[:2])
+        print("Текст(offline): " + text)
+
+    return text
+
 
 def active_listening(source, r):
         while True:
@@ -28,9 +39,8 @@ def active_listening(source, r):
 
             # Попытка распознать сказанное
             try:
-                text = r.recognize_google(audio, language=config.recognize_language)
+                text=recognize(audio,r)
 
-                print("Текст: " + text)
                 if config.bye_phrase.lower() in text.lower():
                     vass.say('Пока, хозяин')
                     break
@@ -49,12 +59,12 @@ def passive_listening(source, r):
     
     while True:
         print("Пассивный режим прослушивания эфира")
-        audio = r.listen(source, timeout=10, phrase_time_limit=None)
+        audio = r.listen(source, timeout=30, phrase_time_limit=10)
         with open("output/passive_audio.wav", "wb") as f:
             f.write(audio.get_wav_data())
         
         try:
-            text = r.recognize_google(audio, language=config.recognize_language)
+            text=recognize(audio, r)
 
             if vass.name.lower() in text.lower():
                 vass.say('Привет, хозяин')               
@@ -73,11 +83,14 @@ def passive_listening(source, r):
 
 def main():
     r = sr.Recognizer()
-    # Получение списка устройств
-    #devices = sr.Microphone.list_microphone_names()
-    # Вывод списка устройств
-    #for i, device in enumerate(devices):
-        #print(f"{i}: {device}")
+    if config.online_recognize==False:
+        model_big = "models/vosk-model-ru-0.42"
+        model_small = "models/vosk-model-small-ru-0.22"
+        if not hasattr(r, 'vosk_model'):
+            if not os.path.exists("models"):
+                return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack  in the 'models' folder."
+                exit(1)       
+            r.vosk_model = Model(model_small)
 
     # Использование микрофона в качестве источника звука
     with sr.Microphone(
@@ -90,3 +103,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
